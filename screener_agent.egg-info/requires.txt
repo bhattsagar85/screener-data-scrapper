@@ -1,0 +1,11 @@
+langchain>=0.2.0
+langchain-openai
+pydantic>=2.5
+playwright
+python-dotenv
+tenacity
+beautifulsoup4
+lxml
+fastapi
+uvicorn
+mcp
