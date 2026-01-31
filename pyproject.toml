@@ -19,7 +19,8 @@ dependencies = [
   "lxml",
   "fastapi",
   "uvicorn",
-  "mcp"
+  "mcp",
+  "langgraph"
 ]
 
 [tool.setuptools]
