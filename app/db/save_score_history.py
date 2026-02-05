@@ -15,14 +15,13 @@ def save_score_history():
 
     cursor.execute("""
         SELECT
-            id,
-            company,
-            strategy,
-            composite_score,
-            decayed_score,
-            strategy_rank
-        FROM stocks
-        WHERE composite_score IS NOT NULL
+            sc.stock_id,
+            s.company,
+            sc.strategy,
+            sc.composite_score
+        FROM stock_scores sc
+        JOIN stocks s ON s.id = sc.stock_id
+        WHERE sc.composite_score IS NOT NULL
     """)
 
     rows = cursor.fetchall()
@@ -35,18 +34,17 @@ def save_score_history():
                 company,
                 strategy,
                 composite_score,
-                strategy_rank,
                 run_date
-            ) VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT(stock_id, run_date) DO UPDATE SET
-                composite_score = excluded.composite_score,
-                strategy_rank = excluded.strategy_rank
+            )
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(stock_id, run_date)
+            DO UPDATE SET
+                composite_score = excluded.composite_score
         """, (
-            row["id"],
+            row["stock_id"],
             row["company"],
             row["strategy"],
             row["composite_score"],
-            row["strategy_rank"],
             run_date
         ))
 

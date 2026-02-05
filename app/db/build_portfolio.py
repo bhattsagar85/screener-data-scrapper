@@ -24,9 +24,9 @@ def build_portfolio(strategy: str, top_n: int = 10):
         conn.close()
         return
 
-    # 🔍 Debug: check if scores exist
+    # 🔍 Debug: check if scores exist (source of truth: stock_scores)
     cursor.execute("""
-        SELECT COUNT(*) FROM stocks
+        SELECT COUNT(*) FROM stock_scores
         WHERE strategy = ?
           AND decayed_score IS NOT NULL
           AND strategy_rank IS NOT NULL
@@ -41,13 +41,15 @@ def build_portfolio(strategy: str, top_n: int = 10):
     # ✅ Fetch top N
     cursor.execute("""
         SELECT
-            company,
-            strategy_rank,
-            decayed_score
-        FROM stocks
-        WHERE strategy = ?
-          AND decayed_score IS NOT NULL
-        ORDER BY strategy_rank ASC
+            s.company,
+            sc.strategy_rank,
+            sc.decayed_score
+        FROM stock_scores sc
+        JOIN stocks s ON s.id = sc.stock_id
+        WHERE sc.strategy = ?
+          AND sc.decayed_score IS NOT NULL
+          AND sc.strategy_rank IS NOT NULL
+        ORDER BY sc.strategy_rank ASC
         LIMIT ?
     """, (strategy, top_n))
 

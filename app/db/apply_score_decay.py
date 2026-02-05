@@ -53,9 +53,9 @@ def apply_score_decay():
         decayed = compute_decayed_score(scores)
 
         cursor.execute("""
-            UPDATE stocks
+            UPDATE stock_scores
             SET decayed_score = ?
-            WHERE id = ?
+            WHERE stock_id = ?
         """, (decayed, stock_id))
 
         updated += 1

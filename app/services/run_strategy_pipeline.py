@@ -15,9 +15,9 @@ from playwright.sync_api import TimeoutError
 def run_strategy(strategy_number: int) -> dict:
     """
     Run full pipeline for a single strategy with:
-    - visible browser (headless=False)
     - retry logic
     - safe selector handling
+    - score history bootstrap
     """
 
     if strategy_number not in STRATEGIES:
@@ -29,7 +29,7 @@ def run_strategy(strategy_number: int) -> dict:
 
     print(f"\n🚀 Running strategy: {strategy_key}")
 
-    # 🔍 HEADLESS DISABLED FOR DEBUGGING
+    # Headless can be toggled later
     browser = ScreenerBrowser(headless=False)
     extractor = ScreenerExtractor()
 
@@ -72,24 +72,24 @@ def run_strategy(strategy_number: int) -> dict:
     insert_stocks(stocks, strategy=strategy_key)
 
     # --------------------------------------------------
-    # 4️⃣ Compute scores
+    # 4️⃣ Compute composite scores
     # --------------------------------------------------
     score_all_stocks()
 
     # --------------------------------------------------
-    # 5️⃣ Apply score decay
+    # 5️⃣ SAVE SCORE HISTORY (BOOTSTRAP STEP) ✅
+    # --------------------------------------------------
+    save_score_history()
+
+    # --------------------------------------------------
+    # 6️⃣ Apply score decay (now history exists)
     # --------------------------------------------------
     apply_score_decay()
 
     # --------------------------------------------------
-    # 6️⃣ Rank using decayed_score
+    # 7️⃣ Rank using decayed_score
     # --------------------------------------------------
     update_strategy_ranks()
-
-    # --------------------------------------------------
-    # 7️⃣ Save score history snapshot
-    # --------------------------------------------------
-    save_score_history()
 
     print(f"✅ Strategy completed: {strategy_key}")
 

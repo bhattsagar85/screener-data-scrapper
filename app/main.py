@@ -1,3 +1,4 @@
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from app.pipeline.golden_cross import run_golden_cross_scan
 from pydantic import BaseModel
@@ -7,9 +8,33 @@ from app.services.portfolio_read_service import get_latest_portfolio
 from app.services.run_strategy_pipeline import run_strategy
 from app.strategy.api_registry import STRATEGIES
 from app.services.portfolio_service import build_and_fetch_portfolio
+from fastapi.middleware.cors import CORSMiddleware
+from app.services.portfolio_analysis import router as portfolio_analysis_router
 
+
+
+
+
+from dotenv import load_dotenv
+load_dotenv()
+
+
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 app = FastAPI(title="Screener Agent API")
+app.include_router(portfolio_analysis_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  # Next.js UI
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 class StrategyRequest(BaseModel):
@@ -59,7 +84,14 @@ def list_strategies():
 def run_strategy_api(req: StrategyRequest):
     try:
         result = run_strategy(req.strategy_number)
-        return result
+        portfolio = build_and_fetch_portfolio(
+            strategy_number=req.strategy_number,
+            top_n=req.top_n,
+        )
+        return {
+            "run": result,
+            "portfolio": portfolio,
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

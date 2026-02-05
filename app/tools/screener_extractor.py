@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-
+import re
 
 class ScreenerExtractor:
     """
@@ -8,46 +8,50 @@ class ScreenerExtractor:
     """
 
     def extract(self, html: str) -> list[dict]:
-        """
-        Extract rows from one or more Screener result pages.
-
-        Args:
-            html: Combined HTML (possibly with PAGE BREAKs)
-
-        Returns:
-            List of row dictionaries
-        """
-        rows: list[dict] = []
-        seen_companies: set[str] = set()
+        rows = []
+        seen_symbols = set()
 
         pages = html.split("<!-- PAGE BREAK -->")
 
         for page_html in pages:
             soup = BeautifulSoup(page_html, "html.parser")
-
             table = soup.select_one("table.data-table")
             if not table:
                 continue
 
             for tr in table.select("tbody tr"):
-                cells = tr.find_all("td")
-                if not cells:
+                tds = tr.find_all("td")
+                if len(tds) < 3:
                     continue
 
-                company_tag = cells[1].find("a")
-                if not company_tag:
+                company_td = tds[1]
+                a = company_td.find("a")
+                if not a:
                     continue
 
-                company = company_tag.text.strip()
+                company = a.text.strip()
+                href = a.get("href", "").strip()
 
-                # De-duplication across pages
-                if company in seen_companies:
+                # 🔑 Extract symbol from URL
+                # /company/COALINDIA/consolidated/
+                match = re.search(r"/company/([^/]+)/", href)
+                symbol = match.group(1) if match else None
+
+                if not company or not symbol:
                     continue
-                seen_companies.add(company)
 
-                row = {"Company": company}
+                # Deduplicate
+                if symbol in seen_symbols:
+                    continue
+                seen_symbols.add(symbol)
 
-                for idx, td in enumerate(cells[2:], start=1):
+                row = {
+                    "company": company,
+                    "symbol": symbol,
+                }
+
+                # Map numeric columns safely
+                for idx, td in enumerate(tds[2:], start=1):
                     row[f"col_{idx}"] = td.text.strip()
 
                 rows.append(row)

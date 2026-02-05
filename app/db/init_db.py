@@ -22,6 +22,7 @@ def init_db():
 
             -- Identity
             company TEXT NOT NULL,
+            symbol TEXT NOT NULL,
 
             -- Price & Valuation
             current_price REAL,          -- col_1
@@ -55,6 +56,24 @@ def init_db():
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_stocks_strategy_date
         ON stocks(strategy, run_date)
+    """)
+
+    # Portfolios table (top-N picks per strategy per run_date)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS portfolios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            strategy TEXT NOT NULL,
+            company TEXT NOT NULL,
+            strategy_rank INTEGER NOT NULL,
+            decayed_score REAL,
+            run_date TEXT NOT NULL,
+            UNIQUE(strategy, company, run_date)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_portfolios_strategy_date
+        ON portfolios(strategy, run_date)
     """)
 
     conn.commit()

@@ -62,7 +62,12 @@ class ScreenerBrowser:
 
     def run_query(self, screener_query: str) -> str:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=self.headless)
+            browser = p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-dev-shm-usage"]
+            )
+            # browser = p.chromium.launch(headless=self.headless)
+
             context = self._create_context(browser)
             page = context.new_page()
 
